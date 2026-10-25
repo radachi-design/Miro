@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Miro LaTeX to SVG</title>
+
+  <!-- MathJax 3 Local Configuration (fontCache: none for pure inlined path SVGs) -->
+  <script>
+    window.MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']],
+        processEscapes: true
+      },
+      svg: {
+        fontCache: 'none'
+      },
+      startup: {
+        typeset: false
+      }
+    };
+  </script>
+  <!-- Load local MathJax 3 standalone script -->
+  <script src="./mathjax/tex-svg.js"></script>
+
+  <!-- Miro Web SDK v2 -->
+  <script src="https://miro.com/app/static/sdk/v2/miro.js"></script>
+
+  <script type="module" crossorigin src="./assets/index-vtd0vD42.js"></script>
+  <link rel="stylesheet" crossorigin href="./assets/index-Do2GE1Qp.css">
+</head>
+<body>
+  <div id="app">
+
+    <!-- Scrollable Workspace -->
+    <main class="app-main">
+      
+      <!-- LaTeX High School Math Helper Palette -->
+      <section class="helper-container">
+        <div class="section-header">
+          <span class="section-label">高校数学 入力パレット</span>
+        </div>
+        <!-- 2-Row 6-Category Complete Grid Tabs -->
+        <div id="toolbarTabs" class="toolbar-tabs">
+          <!-- Dynamically generated 6 tabs in 2 compact rows -->
+        </div>
+        <div id="paletteGrid" class="palette-grid">
+          <!-- Dynamically generated symbol buttons -->
+        </div>
+      </section>
+
+      <!-- LaTeX Textarea Input -->
+      <section class="editor-container">
+        <div class="section-header">
+          <span class="section-label">LaTeX コード入力</span>
+          <span id="reeditBadge" class="reedit-badge" style="display: none;">📌 選択中数式を編集中</span>
+        </div>
+        <textarea
+          id="latexInput"
+          class="latex-textarea"
+          placeholder="数式を入力してください (Enterでそのまま改行できます)"
+          spellcheck="false"
+        ></textarea>
+        <div class="editor-bottom-bar">
+          <button id="undoBtn" class="text-action-btn" title="直前の入力を元に戻す" style="display: none;">↩ 元に戻す</button>
+          <button id="clearBtn" class="text-action-btn" title="入力をクリア">クリア</button>
+        </div>
+      </section>
+
+      <!-- Customization Controls -->
+      <section class="controls-bar">
+        
+        <!-- Text Color & Align -->
+        <div class="control-row">
+          <div class="control-group">
+            <span class="control-label">文字色:</span>
+            <div id="textColorSwatches" class="color-swatches">
+              <button class="color-swatch active" data-color="#111827" style="background-color: #111827;" title="くっきりブラック (標準)"></button>
+              <button class="color-swatch" data-color="#ffffff" style="background-color: #ffffff; border-color: #bbb;" title="ホワイト (黒背景用)"></button>
+              <button class="color-swatch" data-color="#2563eb" style="background-color: #2563eb;" title="ブルー"></button>
+              <button class="color-swatch" data-color="#dc2626" style="background-color: #dc2626;" title="レッド"></button>
+              <button class="color-swatch" data-color="#16a34a" style="background-color: #16a34a;" title="グリーン"></button>
+              <button class="color-swatch" data-color="#9333ea" style="background-color: #9333ea;" title="パープル"></button>
+              <input type="color" id="customTextColorInput" class="custom-color-input" value="#111827" title="カスタム文字色" />
+            </div>
+          </div>
+
+          <div class="control-group">
+            <span class="control-label">揃え:</span>
+            <div id="alignGroup" class="align-select">
+              <button class="option-pill-btn active" data-align="equal" title="＝の位置を綺麗に整列">＝揃え</button>
+              <button class="option-pill-btn" data-align="left" title="左端で整列">左揃え</button>
+              <button class="option-pill-btn" data-align="center" title="中央で整列">中央</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- SVG Background Color, Scale & Preview Frame -->
+        <div class="control-row" style="margin-top: 4px; padding-top: 4px; border-top: 1px solid var(--border-color);">
+          <div class="control-group">
+            <span class="control-label">背景色:</span>
+            <div id="bgColorSwatches" class="color-swatches">
+              <button class="color-swatch active swatch-transparent" data-bgcolor="transparent" title="透過 (背景なし)"></button>
+              <button class="color-swatch" data-bgcolor="#ffffff" style="background-color: #ffffff; border-color: #bbb;" title="白背景カード"></button>
+              <button class="color-swatch" data-bgcolor="#fff9db" style="background-color: #fff9db; border-color: #e5db9c;" title="付箋イエロー"></button>
+              <button class="color-swatch" data-bgcolor="#e7f5ff" style="background-color: #e7f5ff; border-color: #a5d8ff;" title="薄ブルー"></button>
+              <button class="color-swatch" data-bgcolor="#ebfbee" style="background-color: #ebfbee; border-color: #b2f2bb;" title="薄グリーン"></button>
+              <button class="color-swatch" data-bgcolor="#1a1a24" style="background-color: #1a1a24;" title="ダークカード"></button>
+            </div>
+          </div>
+
+          <div class="control-group">
+            <span class="control-label">大きさ:</span>
+            <div id="scaleGroup" class="scale-select">
+              <button class="option-pill-btn" data-scale="0.85">小</button>
+              <button class="option-pill-btn active" data-scale="1.2">標準(大)</button>
+              <button class="option-pill-btn" data-scale="1.6">特大</button>
+            </div>
+          </div>
+
+          <div class="control-group">
+            <span class="control-label">表示枠:</span>
+            <div id="bgToggleGroup" class="bg-toggle-group">
+              <button class="option-pill-btn active" data-bg="light" title="白背景">⬜ 白</button>
+              <button class="option-pill-btn" data-bg="checker" title="透過チェッカー">🏁 網</button>
+              <button class="option-pill-btn" data-bg="dark" title="黒背景">⬛ 黒</button>
+            </div>
+          </div>
+        </div>
+
+      </section>
+
+      <!-- Live Preview Area -->
+      <section class="preview-container">
+        <div class="section-header">
+          <span class="section-label">数式プレビュー</span>
+        </div>
+        <div id="previewBox" class="preview-box bg-light">
+          <div id="previewPlaceholder" class="preview-placeholder">
+            数式を入力するとここに高画質プレビューが表示されます
+          </div>
+          <div id="previewContent" class="preview-content"></div>
+        </div>
+
+        <!-- Detailed Japanese Diagnostic Error Card -->
+        <div id="errorCard" class="error-card">
+          <div class="error-card-header">
+            <span class="error-badge">構文エラー</span>
+            <span id="errorTitle" class="error-title"></span>
+          </div>
+          <div id="errorDetail" class="error-detail"></div>
+          <div id="errorHint" class="error-hint"></div>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- Footer Actions (Compact 3 Buttons Only) -->
+    <footer class="app-footer">
+      <!-- 1-Click Primary Add Button (Centers on visible Miro screen) -->
+      <button id="addToBoardBtn" class="btn-primary" title="現在見えている画面の真ん中に直接配置">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="8" x2="12" y2="16"></line>
+          <line x1="8" y1="12" x2="16" y2="12"></line>
+        </svg>
+        <span>Miroボードに追加 (画面中央)</span>
+      </button>
+
+      <!-- Secondary 2 Copy Buttons -->
+      <div class="actions-row">
+        <button id="copyPngBtn" class="btn-secondary" title="画像(PNG)としてクリップボードにコピー (Ctrl+Vで画像貼り付け)">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+            <circle cx="8.5" cy="8.5" r="1.5"></circle>
+            <polyline points="21 15 16 10 5 21"></polyline>
+          </svg>
+          <span>画像(PNG)コピー</span>
+        </button>
+        <button id="copySvgBtn" class="btn-secondary" title="ベクターSVGコードをコピー">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+          </svg>
+          <span>SVGコードコピー</span>
+        </button>
+      </div>
+    </footer>
+
+    <!-- Toast Container -->
+    <div class="toast-container">
+      <div id="toast" class="toast"></div>
+    </div>
+  </div>
+
+</body>
+</html>
