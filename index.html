@@ -21,14 +21,20 @@
       }
     };
   </script>
-  <!-- Load local MathJax 3 standalone script -->
-  <script src="./mathjax/tex-svg.js"></script>
+  <!-- Load local MathJax 3 standalone script (root or subfolder fallback) -->
+  <script src="./tex-svg.js"></script>
+  <script>
+    if (!window.MathJax || !window.MathJax.tex2svg) {
+      document.write('<script src="./mathjax/tex-svg.js"><\/script>');
+    }
+  </script>
 
   <!-- Miro Web SDK v2 -->
   <script src="https://miro.com/app/static/sdk/v2/miro.js"></script>
 
-  <script type="module" crossorigin src="./assets/index-vtd0vD42.js"></script>
-  <link rel="stylesheet" crossorigin href="./assets/index-Do2GE1Qp.css">
+  <link rel="icon" type="image/svg+xml" href="./icon.svg" />
+  <script type="module" crossorigin src="./index-DpcxBefu.js"></script>
+  <link rel="stylesheet" crossorigin href="./index-DSopn9x5.css">
 </head>
 <body>
   <div id="app">
@@ -36,7 +42,52 @@
     <!-- Scrollable Workspace -->
     <main class="app-main">
       
-      <!-- LaTeX High School Math Helper Palette -->
+      <!-- 1. LaTeX Textarea Input (with expand toggle) -->
+      <section class="editor-container">
+        <div class="section-header">
+          <span class="section-label">LaTeX コード入力</span>
+          <div class="editor-header-actions">
+            <button id="expandEditorBtn" class="expand-btn" title="入力欄を拡大/縮小">⛶ 拡大</button>
+            <button id="ocrBtn" class="ocr-btn" title="教科書の写真やスクショから数式を自動認識">📷 画像から数式読取</button>
+            <span id="reeditBadge" class="reedit-badge" style="display: none;">📌 選択中数式</span>
+          </div>
+        </div>
+        <textarea
+          id="latexInput"
+          class="latex-textarea"
+          placeholder="数式を入力してください (Enterで改行 / 画像を直接Ctrl+V貼り付けも可)"
+          spellcheck="false"
+        ></textarea>
+        <div class="editor-bottom-bar">
+          <button id="undoBtn" class="text-action-btn" title="直前の入力を元に戻す" style="display: none;">↩ 元に戻す</button>
+          <button id="clearBtn" class="text-action-btn" title="入力をクリア">クリア</button>
+        </div>
+      </section>
+
+      <!-- 2. Live Preview Area -->
+      <section class="preview-container">
+        <div class="section-header">
+          <span class="section-label">数式プレビュー</span>
+        </div>
+        <div id="previewBox" class="preview-box bg-light">
+          <div id="previewPlaceholder" class="preview-placeholder">
+            数式を入力するとここに高画質プレビューが表示されます
+          </div>
+          <div id="previewContent" class="preview-content"></div>
+        </div>
+
+        <!-- Detailed Japanese Diagnostic Error Card -->
+        <div id="errorCard" class="error-card">
+          <div class="error-card-header">
+            <span class="error-badge">構文エラー</span>
+            <span id="errorTitle" class="error-title"></span>
+          </div>
+          <div id="errorDetail" class="error-detail"></div>
+          <div id="errorHint" class="error-hint"></div>
+        </div>
+      </section>
+
+      <!-- 3. LaTeX High School Math Helper Palette -->
       <section class="helper-container">
         <div class="section-header">
           <span class="section-label">高校数学 入力パレット</span>
@@ -50,25 +101,7 @@
         </div>
       </section>
 
-      <!-- LaTeX Textarea Input -->
-      <section class="editor-container">
-        <div class="section-header">
-          <span class="section-label">LaTeX コード入力</span>
-          <span id="reeditBadge" class="reedit-badge" style="display: none;">📌 選択中数式を編集中</span>
-        </div>
-        <textarea
-          id="latexInput"
-          class="latex-textarea"
-          placeholder="数式を入力してください (Enterでそのまま改行できます)"
-          spellcheck="false"
-        ></textarea>
-        <div class="editor-bottom-bar">
-          <button id="undoBtn" class="text-action-btn" title="直前の入力を元に戻す" style="display: none;">↩ 元に戻す</button>
-          <button id="clearBtn" class="text-action-btn" title="入力をクリア">クリア</button>
-        </div>
-      </section>
-
-      <!-- Customization Controls -->
+      <!-- 4. Customization Controls (Color, Align, Scale, Frame) -->
       <section class="controls-bar">
         
         <!-- Text Color & Align -->
@@ -131,26 +164,17 @@
 
       </section>
 
-      <!-- Live Preview Area -->
-      <section class="preview-container">
+      <!-- 5. Creation History (Last 10 items) -->
+      <section class="history-container">
         <div class="section-header">
-          <span class="section-label">数式プレビュー</span>
-        </div>
-        <div id="previewBox" class="preview-box bg-light">
-          <div id="previewPlaceholder" class="preview-placeholder">
-            数式を入力するとここに高画質プレビューが表示されます
+          <div class="history-header-left">
+            <span class="section-label">📜 作成履歴</span>
+            <span id="historyCountBadge" class="history-count-badge">0 / 10</span>
           </div>
-          <div id="previewContent" class="preview-content"></div>
+          <button id="clearHistoryBtn" class="text-action-btn" title="履歴をすべて削除" style="display: none;">全削除</button>
         </div>
-
-        <!-- Detailed Japanese Diagnostic Error Card -->
-        <div id="errorCard" class="error-card">
-          <div class="error-card-header">
-            <span class="error-badge">構文エラー</span>
-            <span id="errorTitle" class="error-title"></span>
-          </div>
-          <div id="errorDetail" class="error-detail"></div>
-          <div id="errorHint" class="error-hint"></div>
+        <div id="historyList" class="history-list">
+          <div class="history-empty">作成した数式（最大10件）がここに保存されます</div>
         </div>
       </section>
 
@@ -158,14 +182,14 @@
 
     <!-- Footer Actions (Compact 3 Buttons Only) -->
     <footer class="app-footer">
-      <!-- 1-Click Primary Add Button (Centers on visible Miro screen) -->
-      <button id="addToBoardBtn" class="btn-primary" title="現在見えている画面の真ん中に直接配置">
+      <!-- 1-Click Primary Add Button (Centers on currently visible Miro screen) -->
+      <button id="addToBoardBtn" class="btn-primary" title="いま見えている画面の中央に数式を直接配置">
         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
           <circle cx="12" cy="12" r="10"></circle>
           <line x1="12" y1="8" x2="12" y2="16"></line>
           <line x1="8" y1="12" x2="16" y2="12"></line>
         </svg>
-        <span>Miroボードに追加 (画面中央)</span>
+        <span>Miro画面中央に配置</span>
       </button>
 
       <!-- Secondary 2 Copy Buttons -->
@@ -187,6 +211,54 @@
         </button>
       </div>
     </footer>
+
+    <!-- Hidden File Input for Image Upload -->
+    <input type="file" id="imageFileInput" accept="image/*" style="display: none;" />
+
+    <!-- Image OCR Modal -->
+    <div id="ocrModal" class="modal-backdrop" style="display: none;">
+      <div class="modal-content">
+        <div class="modal-header">
+          <span class="modal-title">📷 画像から数式をAI読み取り</span>
+          <button id="closeOcrModalBtn" class="modal-close-btn">&times;</button>
+        </div>
+        <div class="modal-body">
+          <!-- Drop / Select Zone -->
+          <div id="ocrDropZone" class="ocr-drop-zone">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+              <circle cx="8.5" cy="8.5" r="1.5"></circle>
+              <polyline points="21 15 16 10 5 21"></polyline>
+            </svg>
+            <div class="drop-zone-text">
+              <strong>教科書の写真やスクショ画像をドロップ</strong><br />
+              <span>またはクリックして写真を選択 / ここで <code>Ctrl+V</code> で貼り付け</span>
+            </div>
+          </div>
+
+          <!-- Loading Indicator -->
+          <div id="ocrLoading" class="ocr-loading" style="display: none;">
+            <div class="spinner"></div>
+            <span>数式をAI解析・LaTeX変換中...</span>
+          </div>
+
+          <!-- API Key Setup Accordion -->
+          <details id="apiKeyDetails" class="api-key-details">
+            <summary>⚙️ Google Gemini API設定 (無料)</summary>
+            <div class="api-key-box">
+              <p class="api-key-desc">
+                無料の <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener">Google AI Studio (API Key)</a> で取得したキーを入力すると、画像認識AIが有効になります。
+              </p>
+              <div class="api-key-input-row">
+                <input type="password" id="geminiApiKeyInput" class="api-key-input" placeholder="AIzaSy..." />
+                <button id="saveApiKeyBtn" class="btn-small-primary">保存</button>
+              </div>
+              <span id="apiKeyStatus" class="api-key-status"></span>
+            </div>
+          </details>
+        </div>
+      </div>
+    </div>
 
     <!-- Toast Container -->
     <div class="toast-container">
